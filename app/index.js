@@ -1,5 +1,36 @@
 /* jshint esversion: 7 */
 
+function getFirstObject(store) {
+  return new Promise((success, reject) => {
+    if ("indexedDB" in window) {
+      let handle = window.indexedDB.open("database", 1);
+      
+      handle.addEventListener("success", (event) => {
+        let db = event.target.result;
+
+        try {
+          let collection = db.transaction(store).objectStore(store);
+          let object = collection.openCursor();
+          object.addEventListener("success", (event) => {
+            let cursor = event.target.result
+            success(cursor);
+          });
+
+          object.addEventListener("error", (error) => {
+            reject(error);
+          });
+        } catch (error) {
+          reject(error);
+        }
+
+        db.addEventListener("error", (error) => {
+          reject(error);
+        });
+      });
+    }
+  });
+}
+
 function intializeModelComponent(modelName) {
   customElements.define(modelName, class extends HTMLElement {
     constructor() {
@@ -31,6 +62,10 @@ function intializeModelComponent(modelName) {
     }
 
     templateProcessor(dom) {
+      dom.head.querySelectorAll("script").forEach((script) => {
+        document.head.appendChild(script);
+      });
+
       const body = dom.body;
       
       const template = document.createElement("template");
@@ -114,7 +149,8 @@ function intializeModelComponent(modelName) {
               this.attachShadow({ mode: "open" })
                 .appendChild(template.content.cloneNode(true));
 
-              let fieldElement = model.content.querySelector(`[slot='${field.getAttribute("slot")}']`).cloneNode(true);
+              let fieldElement = field.cloneNode(true);
+              
               fieldElement.appendChild(document.createTextNode(data[field.getAttribute("slot")]));
               this.appendChild(fieldElement);
             }
@@ -158,14 +194,13 @@ customElements.define("app-model", class extends HTMLElement {
 customElements.define("model-first", class extends HTMLElement {
   constructor() {
     super();
-    // Faked, this is where the magic data needs to appear.
-    this.modelData = {
-      title: "Hello World!",
-      content: "How are you today?"
-    };
   }
 
   connectedCallback() {
-    this.parentElement.hydrate(this.modelData);
+    self = this;
+
+    getFirstObject(this.parentElement.localName.substring(this.parentElement.localName.indexOf("-") + 1)).then((data) => {
+      self.parentElement.hydrate(data.value);
+    });
   }
 });
