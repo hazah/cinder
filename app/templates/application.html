@@ -3,7 +3,8 @@
     <title>Application Template</title>
   </head>
   <body>
-    <!-- simple application layout wrapper -->
-    <div class="application"><slot></slot></div>
+    <!-- main view of the application -->
+    <header><navigation-component></navigation-component></header>
+    <main><slot></slot></main>
   </body>
 </html>

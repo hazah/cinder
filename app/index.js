@@ -57,6 +57,15 @@ function intializeModelComponent(modelName) {
         }).then(() => {
           this.attachShadow({ mode: "open" })
               .appendChild(this.yield.content.cloneNode(true));
+        }).then(() => {
+          document.querySelectorAll("*").forEach((element) => {
+            if (element.localName.endsWith("-component")) { 
+              intializeComponent(element.localName);
+//               document.querySelector("body > model-greeting")
+//                 .shadowRoot.querySelector("app-model")
+//                 .shadowRoot.querySelector("header > navigation-component");
+            }
+          });
         });
       });
     }
@@ -165,14 +174,22 @@ function notCoreComponent(name) {
   return name != "model-first";
 }
 
+function initializeComponent(componentName) {
+  customElements.define(componentName, class extends HTMLElement {
+    constructor() {
+      super();
+    }
+
+    connectedCallback() {
+      console.log(this);
+    }
+  });
+}
+
 document.querySelectorAll("*").forEach((element) => {
-  if (element.localName.startsWith("model-")) {
-    
+  if (element.localName.startsWith("model-")) { 
     if (notCoreComponent(element.localName)) {
       intializeModelComponent(element.localName);
-
-    } else {
-
     }
   }
 });
